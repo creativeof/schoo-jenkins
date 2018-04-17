@@ -1,0 +1,69 @@
+AWS
+EC2(Elastic Compute Cloud):仮想サーバ
+RDS(Relational Database Service):データベース
+S3(Simple Storage Service):ストレージ
+
+
+EC2インスタンス作成
+
+自動割り当てパブリックIP
+ap-northeast-1a
+
+削除保護の有効化にチェック
+
+
+
+sudo yum update
+
+sudo yum -y install httpd php mysql
+
+httpdを起動
+sudo service httpd start
+再起動した時に自動的にhttpdが立ち上がる状態にする。
+sudo chkconfig httpd on
+
+vim /var/www/html/index.html
+
+
+
+バックアップ
+ボリューム→スナップショットの作成
+
+バックアップからインスタンスを再び立ち上げたい場合、
+スナップショットから一旦イメージを作り、
+イメージからインスタンスを立ち上げる。
+
+インスタンスのスペック変更
+インスタンスを停止してから、
+インスタンスの設定→インスタンスタイプの変更
+
+
+RDB
+アベイラビリティーゾーンはEC2(WebServer)と同じに
+バックアップ保存期間
+
+スペック変更
+インスタンスの操作→変更
+
+EC2から接続
+サブネットグループ
+
+
+S3
+アップロードしたファイルにアクセスできるようにする
+公開する
+
+一般的にWebサービスなどでS3を使う場合はSDKを使うことになる。
+PHPからS3にファイルをアップロードしたり、そのファイルを使う場合、
+「sdk aws php」などで検索すると便利なツールをダウンロードできる。
+
+
+S3だけで静的なWebサイトをホストする場合
+
+アクセス制限→バケットポリシー
+ポリシージェネレーター
+ドキュメントのBucket Policy Examplesから
+Granting Read-Only Permission to an Anonymous Userを設定
+
+プロパティ→Static website hosting
+このバケットを使用してウェブサイトをホストする。

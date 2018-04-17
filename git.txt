@@ -1,0 +1,229 @@
+git
+
+1.作業ディレクトリ
+2.ステージングエリア（インデックス）
+3.リポジトリ(ローカル・リモート)
+
+gitはデータを保存するときに
+必ず保存した人の名前とEメールを記載することになっている
+
+必須
+git config --global user.name "Test User"
+git config --global user.email "young_persons_town@yahoo.co.jp"
+
+メッセージを色分け
+git config --global color.ui true
+
+設定確認
+git config -l
+マニュアル
+git config --help
+git help config
+:qで抜ける
+
+エディタにvimを使用する場合
+git config --global core.editor vim
+
+gitを使う作業ディレクトリに移動し、
+git initコマンドを実行（初回のみ）
+
+------------------------------------
+変更したファイルを元に戻す。
+git checkout -- 元に戻したいファイル名
+
+
+ステージングエリアにファイルを上げる
+git add index.html
+git add . 今のディレクトリより下のファイルを全部addする
+
+git add -n *.txt  addした場合どのファイルがaddされるか。
+http://yuzu441.hateblo.jp/entry/2014/07/24/234840
+
+ステージングエリアからリポジトリに上げる
+git commit
+エディタが立ち上がるのでメッセージを入れる
+
+コメントが１行であればエディタが立ち上がらずにコミットできる
+git commit -m "ライン２を追加"
+
+addとcommitを同時に行う場合
+git commit -am "line3 added"
+
+git commit --amend  直前のcommitを変更する
+
+
+コミット前のファイルを前の状態に戻す(commitされてるものも戻る)
+head 作業ディレクトリ、ステージングエリアの両方を戻す
+git reset --hard HEAD   直前のもの
+git reset --hard HEAD^  2つ前のもの
+git reset --hard f5709ac467  コミットidを7桁以上指定
+
+ORIG_HEAD 前回取り消されたHEADの情報が１個だけ入っている
+git reset --hard ORIG_HEAD
+
+-------------------------------------
+ブランチ
+git branch  今いるブランチが見れる(*がついている)
+git branch hoge  新しいブランチを作る
+git checkout hoge  今いるブランチを移動する
+
+ブランチの作成とチェックアウト（移動）を同時にする場合
+git checkout -b hoge
+
+
+ブランチとマージ
+マージさせたいブランチに行ってマージ元のブランチ名を指定
+
+masterに対してhogeマージ
+MacBook:myweb bona$ git branch
+  hoge
+* master
+MacBook:myweb bona$ git merge hoge
+
+マージしてコンフリクトした場合
+git statusで確認するとboth modified:となっている。
+
+
+
+git branch -d hoge  ブランチの削除
+
+
+スタッシュ（一時的に変更内容を退避）
+git stash save "コメント"
+
+退避した情報を見る
+git stash list
+stashするたびに一覧の上に積み上がっていく。
+
+退避した内容を取り出す
+git stash pop
+引数をつけない場合、listの一番上の内容が取り出される。
+
+
+マージ済みのブランチ一覧を確認する
+masterにマージ済みのbranchの一覧を見るには、masterに切り替えた状態で
+「git branch --merged」を実行する。
+git checkout master
+git branch --merged
+マージしてないbranchの一覧を見るには「git branch --no-marged」を使う。
+git checkout master
+git branch --no-merged
+
+---------------------------------------------------
+タグ  コミットIDにわかりやすい名前をつけられる
+git tag v1.0  直近のコミットにv1.0というタグを付ける
+git tag v0.9 b48a7cbae30  コミットIDを指定したものにタグ付け
+
+git tag  一覧表示
+git show v1.0  v1.0のコミットの内容を示す
+git tag -d v0.9  タグを消す
+
+git resetでバージョンを戻すときもタグが使える
+-------------------------------------
+
+git log  履歴を見る
+git log --oneline  ざっと履歴を見る
+git log -p  変更された箇所を見る
+git log --stat  どのファイルが何箇所変わったか（変更したファイルのみ見たい場合）
+
+git status  今の状況を確認
+git checkout -- index.html  前の状態に戻す
+
+
+差分を見る
+git diff  まだステージングエリアに上げてないものとリポジトリ
+git diff --cached  ステージングエリアのものとリポジトリ
+
+
+いったんgitの管理化に置かれたファイルを移動、削除する場合は
+git mv ファイル名、git rm ファイル名 とする。
+
+
+■gitで管理したくないファイル
+.gitignoreというファイルを作り、ここに対象ファイルを記載する
+同じディレクトリにあるものと下位のディレクトリにあるもの全てに適用される
+vim .gitignore
+*.log（拡張子がlogのもの）
+
+
+■gitコマンドの短縮名（エイリアス）を付ける方法
+
+git config --global alias.co checkout
+(checkoutコマンドをcoにする場合)
+
+git config --global alias.st status
+git config --global alias.br branch
+git config --global alias.ci commit
+
+git config -l  設定を確認
+
+-----------------------------------
+共有リポジトリ(.gitと付ける)
+mkdir ourweb.git
+cd ourweb.git/
+git init --bare  共有リポジトリ作成
+(bareをつけることでこの中ではコミットとかはしない設定になる)
+
+
+自分の作業ディレクトリに移動し、
+共有リポジトリをマウントする
+git remote add 名前 リポジトリの場所
+git remote add origin ~/ourweb.git
+
+共有リポジトリとのマウントを削除
+git remote rm origin
+
+共有リポジトリに上げる push
+masterのcommit内容をoriginに入れる
+git push origin master
+
+共有リポジトリの内容を引っ張ってきてマージ pull
+git pull origin master
+
+
+共有リポジトリの内容をmyweb2にコピー
+git clone ~/ourweb.git/ myweb2
+
+myweb2で修正したものをリポジトリに上げる
+git push origin master
+
+
+
+=========================
+Git Hub
+=========================
+
+git remote add origin https://github.com/creativeof/app.git
+
+git push origin master
+
+
+参考サイト
+Railsアプリケーションをherokuへデプロイ
+http://fuzz-jpn.com/blog/rails_git_github/
+
+
+ブランチ削除
+git push origin :branch
+
+http://qiita.com/kwgch/items/98bbaae8e9f40a9548e0
+
+
+==============================================
+https://scrapbox.io/wakaba
+
+フェッチ→マージ＝プル
+
+フェッチ後にローカルのmasterにマージする場合は
+masterにチェックアウトしている状態で
+origin/master上で右クリックしてマージ
+http://schoo.jp/class/4233/room
+
+
+スタッシュ
+一旦ステージする。
+スタッシュ（メッセージ:で名前をつけられる）
+[ブランチ移動して別作業]
+ブランチを切り替えて
+スタッシュしたものを復活させる。
+（右クリック退避した変更を適用）
