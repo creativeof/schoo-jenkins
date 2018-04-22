@@ -1,0 +1,171 @@
+Rspec
+TDDを推し進めたBDDを実現するためのテストフレームワーク
+
+TDD(Test Driven Development テスト駆動開発)
+実際のコードを書く前にソフトウェアの要件を満たす
+テストを書きましょうという開発手法
+
+BDD(Behavior Driven Development)
+TDDをさらに推し進めて、
+ソフトウェアの振る舞いを記述することによって
+テストコードをより読みやすくした手法
+
+TDD/BDD開発サイクル
+1.失敗するテストを書く（Red）
+2.最小限のコードを書いてテストをパスさせる（Green）
+3.リファクタリング（重複などを省いてコードを綺麗にする）
+これらのサイクルをぐるぐる回していく
+
+
+http://rspec.info/
+
+https://relishapp.com/rspec
+いろいろな仕様が詳しく載っている。
+
+
+
+設定ファイルの作成
+rspec --init
+
+spec/spec_helper.rb  便利な設定ができる（初心者のうちは使わない）
+.rspec  rspecコマンドにデフォルトで渡すオプションを記載
+
+テストを書くファイルは「specフォルダ」に入れる
+ファイル名: テストしたいクラス名_spec.rb
+
+実際のコードは「libフォルダ」を作って、その中に作っていく。
+
+クラス名_rspec.rb
+-------------------------------------------
+require テスト対象クラス
+
+RSpec.descriibe テスト対象クラス do
+  context "状況"
+    it "どういった振る舞いを期待するか" do
+
+      ここにテストを書いていく
+      expect(期待する処理)
+    end
+  end
+end
+クラス名_rspec.rb
+-------------------------------------------
+
+describeでテスト対象を指定する。
+入れ子にしてグループ分けすることもできる。
+Rspec.はトップレベルのみにつければよい。
+トップレベルのdescribeはテスト対象となるクラス名を書いたりする。
+
+トップレベルのdescribeでクラス名を指定した場合、
+そのクラスのインスタンスをsubjectで代用できる。
+ただ、テストが長くなると分かりづらくなるので
+subject(:変数名) { クラス名.new }をRspec.describeの下に記載して、
+:で指定した変数名をローカル変数としてそれぞれのexampleで使うことができる。
+
+なるべくexampleの中ではインスタンス変数を使わないほうがいいと言われているので
+beforeを使う方法より、subjectを使う書き方がおすすめ。
+
+操作の主対象以外で変数で何かを管理したい場合はletを使う。
+letはexampleごとに結果がキャッシュされる。（一番最初の値が使い回される）
+letは遅延評価される。変数を呼び出さないと{}の内容が処理されない。
+let!とすれば、変数を呼び出さなくてもその場で評価される。
+
+
+describeはcontextと書いても同じ意味になる。
+テスト対象が物だった場合はdescribe   例:Class
+状況だった場合はcontext   例:"when normal mode"
+
+
+
+it "" do
+end
+のブロックをexampleという
+
+””のテキストを省略することも可能。
+do endを{}で置き換えることもできる。
+ブロックを書かないで、it ""と一行だけ書くと、そのテストはペンディングになる。
+
+itはexampleやspecifyで書き換えることができる。
+（この後に続く文章に対して、自然な文になるものを使えばよい）
+
+
+matcher
+期待される振る舞いを指定する記号
+https://relishapp.com/rspec/rspec-expectations/v/3-7/docs/built-in-matchers
+.to eq()
+.not_to eq()
+.to be true
+.to be < 10
+.to be_between(1, 10).inclusive  ←1〜10で1と10も含む
+.to respond_to(:add)  ←addメソッドがあるか
+.to be_integer  ←integerかどうか
+
+
+■beforeブロック
+共通化するための仕組み
+
+before(:example) do
+end
+それぞれのexampleを実行する前にやってくれる。
+オプションを省略して、beforeだけでも同じ。
+
+exampleをまたがって変数を指定する場合は、
+@をつけてインスタンス変数にする。
+
+before(:context) do
+end
+RSpec descriibe "" do end の中で１回だけやりたい場合
+
+
+
+■test double
+まだ実装してないけどテストをしたい代役オブジェクトを作る
+
+・method stub
+実装してないけどテストに使えるメソッドを作る
+
+user = double('user')   ← user = double()でもよい。
+
+allow(user).to receive(:name).and_return('taguchi')
+userに対してnameというメソッドを無理やりくっつけて
+「taguchi」を返せと指定。
+
+これでuser.nameを中身を実装しなくても使えるようになる。
+
+・message expectation
+呼ばれなかったらテストが失敗する。
+（ある処理の前に確実にある処理が走っていることを保証したいときに使う）
+
+logger = double('logger')
+expect(logger).to receive(:log)
+loggerが必ずlogというメソッドを呼ばないといけない
+
+
+■shared_examples
+exampleを部品化して共有
+
+Rspec.shared_examples "部品名" do
+end
+
+呼び出すとき
+include_example "部品名"
+
+
+
+テストの実行
+rspec
+オプションを付けずに実行すると
+適当にspecフォルダを探して、テストを実行してくれる。
+
+ ファイルを指定して実行
+rspec spec/calc_spec.rb
+
+テストの数だけ文字が表示される。
+F 失敗
+
+違った角度からテストを加えることを「三角測量」と呼ぶ
+
+
+rspec -fd
+format documentation のオプションを付けると
+緑の「.」や赤の「F」が、文章で色分けされて表示される。
