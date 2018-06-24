@@ -1,0 +1,299 @@
+ローカル開発環境
+■VirtualBox
+手元のPCの中にいくつもサーバを立ち上げることができる。
+■Vagrant
+サーバの設定やインストールを簡単なコマンドで扱える
+Vagrantのコマンドを通して裏でVirtualBoxが動いてる。
+
+VirtualBox(古いバージョンがあれば上書きインストールされる) 5.2.12
+https://www.virtualbox.org/
+古いバージョンをインストールしたい場合
+https://www.virtualbox.org/wiki/Download_Old_Builds
+
+
+Vagrant 2.1.1
+https://www.vagrantup.com/
+サーバ１つにつき１つのフォルダ
+Vagrantfile サーバの設定（ipアドレスは他のサーバと被らないようにする）
+
+----------------------------------
+1) Vagrantbox.esから取得する場合
+https://www.vagrantbox.es/
+
+URLからboxを追加
+vagrant box add  box名(任意) URL
+vagrant box add ubuntu-16.04 https://github.com/jose-lpa/packer-ubuntu_lts/releases/download/v3.1/ubuntu-16.04.box
+
+サーバを作るディレクトリに移動して
+vagrant init ubuntu-16.04
+------------------------------------
+2) Vagrant Cloudから取得する場合
+https://app.vagrantup.com/
+サーバを作るディレクトリに移動して
+vagrant init xxxx/xxxx
+------------------------------------
+
+Vagrantfileを編集
+vi Vagrantfile
+ipアドレスを変更コメントを外す
+config.vm.network "private_network", ip: "192.168.33.10"
+
+起動
+vagarnt up
+
+ssh接続
+vagrant ssh
+=========================================================================
+
+ターミナル→環境設定
+フォント  変更  等幅  Ricty Diminished
+=============================================
+日本時間
+locale -a
+locale-gen
+
+
+
+Dockerインストール
+sudoなしでdockerコマンドを実行できるようにする。
+sudo gpasswd -a $USER docker
+sudo service docker restart
+exit
+
+Docker-compose インストール
+sudo curl -L https://github.com/docker/compose/releases/download/1.21.2/docker-compose-$(uname -s)-$(uname -m) -o /usr/local/bin/docker-compose
+sudo chmod +x /usr/local/bin/docker-compose
+
+Compose and Rails
+https://docs.docker.com/compose/rails/
+
+
+カレントディレクトリ配下の所有者とグループを全て現在のユーザーに変更
+sudo chown -R $USER:$USER .
+
+
+http://192.168.22.11:3000/
+
+===========================================
+rails5
+Convention over Configuration (CoC)
+細かい規約を決めておくことでコードを書く量を減らす
+
+モデル作成（単数形）
+rails g model Post title:string body:text
+
+Running via Spring preloader in process 53
+      invoke  active_record
+      create    db/migrate/20180603045450_create_posts.rb
+      create    app/models/post.rb
+      invoke    test_unit
+      create      test/models/post_test.rb
+      create      test/fixtures/posts.yml
+
+DBに反映
+rails db:migrate
+
+
+他のモデルと紐付けたい場合、referencesを使う
+rails g model Comment body:string post:references
+
+Running via Spring preloader in process 72
+      invoke  active_record
+      create    db/migrate/20180603083723_create_comments.rb
+      create    app/models/comment.rb
+      invoke    test_unit
+      create      test/models/comment_test.rb
+      create      test/fixtures/comments.yml
+
+comment.rbに belongs_to :post が設定されるので
+post.rbに has_many :comments を設定する
+
+postが削除されたときに関連するcommentを削除する場合、
+post.rbに dependent: :destroy を設定する
+
+データ投入
+-------------------------------
+コンソールを実行
+rails c または rails console
+p = Post.new(title: 'title 1', body: 'body 1')
+p.save
+もしくは
+Post.create(title: 'title 2', body: 'body 2')
+
+データ確認
+Post.all
+
+quit
+------------------------------
+Postgres接続
+su - postgres
+psql -l
+psql sa_development
+
+# \l   DB一覧
+# \dt  テーブル一覧
+# \q  終了
+------------------------------
+現在のテーブルの中身をクリアする(テーブルを削除して作り直す)
+rails db:migrate:reset
+
+初期データを管理する場合
+db/seeds.db
+5.times do |i|
+  Post.create(title: "title #{i}", body: "body #{i}")
+end
+
+初期データを投入
+rails db:seed
+------------------------------
+コントローラー作成（複数形）
+rails g controller Posts
+
+create  app/controllers/posts_controller.rb
+invoke  erb
+create    app/views/posts
+invoke  test_unit
+create    test/controllers/posts_controller_test.rb
+invoke  helper
+create    app/helpers/posts_helper.rb
+invoke    test_unit
+invoke  assets
+invoke    coffee
+create      app/assets/javascripts/posts.coffee
+invoke    scss
+create      app/assets/stylesheets/posts.scss
+
+helper、assetsなども同時作成される。
+------------------------------
+ルーティング設定
+どのURLでアクセスされたときにcontrollerのどのメソッドを実行するか
+config/routes.rb
+
+一般的な処理を一気に指定したい場合
+resources :posts
+
+rootパスの設定(postコントローラーのindexアクションを呼ぶ)
+root 'posts#index'
+
+ルーティングを確認
+rails routes
+
+
+potsにcommentsが紐づいた形のルーティング
+resources :posts do
+  resources :comments, only: [:create, :destroy]
+end
+------------------------------
+ビューの作成
+app/views/posts/index.html.erb
+
+app/views/layouts/application.html.erb
+app/assets/stylesheets/application.css
+------------------------------
+link_toヘルパー
+<%= link_to post.title, post_path(post) %>
+(post_path(post.id)をpost_path(post)としてもOK)
+post GET  /posts/:id(.:format)  posts#show
+
+URLで渡ってくるidはコントローラーで
+params[:id]のように表現できる。
+（ルーティングで:idという名前になっているので）
+
+imgage_tagヘルパー
+画像を配置する
+<%= image_tag 'logo.png', class: 'logo' %>
+<%= link_to image_tag('logo.png', class: 'logo'), root_path %>
+
+form_forヘルパー
+
+simple_format
+改行を適切なタグに直してくれる
+
+newではpost_idとコメントの新しいオブジェクトが必要
+@postとpostに紐づいたcommentの新しいオブジェクトを作るには
+@post.comments.buildとする。
+<%= form_for([@post, @post.comments.build]) do |f| %>
+複数の場合は配列にして()で渡す必要がある。
+
+------------------------------
+送信データの確認
+render plain: params[:post].inspect
+
+バリデーションエラーメッセージの確認
+render plain: @post.errors.inspect
+
+Strong Parameters
+受け取ったパラメータをチェックする。
+@post = Post.new(params[:post])  ←ActiveModel::ForbiddenAttributesError
+  ↓
+@post = Post.new(params.require(:post).permit(:title, :body))
+送信されたデータはpostをキーにしてtitleとbodyがあるハッシュじゃないといけない
+
+------------------------------
+バリデーション
+バリデーションはモデルに記載
+
+バリデーションエラーだと
+saveでfalseが返ってくる。
+
+newと同じviewを表示
+render 'new'
+------------------------------
+パーシャル
+_form.html.erb
+editとnewのパラメータは
+config/routes.rbでresourcesを使っている場合、
+そのオブジェクトを使うだけで
+Railsが適切に設定してくれる。
+
+<%= form_for :post, url: posts_path do |f| %> ← new
+<%= form_for @post, url: post_path(@post) do |f| %> ← edit
+<%= form_for @post do |f| %> ← partial
+------------------------------
+deleteはgetやpostと違って
+DELTEという形式でこのURLにアクセスするということを明示的に指定する。
+method: :delete
+
+
+================================================
+■scaffold
+rails g scaffold Memo title:string body:text
+DBへ反映
+reils db: migrate
+アクセス
+http://192.168.22.11:3000/memos
+--------------------------------------------
+
+dオプションでバックグラウンドでサーバーを立ち上げる
+rails server -b 192.168.33.10 -d
+
+RailsはPumaというWebサーバで動いてる
+ps aux | grep puma
+
+サーバのプロセス番号を調べる。
+cat tmp/pids/server.pid
+
+kill -9 xxxx
+
+ログ
+tail log/development.log
+
+
+================================================
+GitHub上で新しいリポジトリを作成
+https://github.com/creativeof?tab=repositories
+
+GitHubへアップロードしたいプロジェクトディレクトリへ移動
+git init
+
+git add .
+git commit -m "Initial Commit"
+
+git remote add origin https://github.com/creativeof/rails5-blog.git
+git push -u origin master
+
+---------------------------------
+コミットユーザー変更
+git config --local user.name test
+git config --local user.email young_persons_town@yahoo.co.jp
+cat .git/config
